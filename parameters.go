@@ -32,11 +32,13 @@ Options:
                              alert - the default is to show in all displays.
   --threshold <int>          Percentual threshold to show notification.
                              [default: 15]
+  --message <string>         Message to display [default: You battery is running low. Please plug in a power adapter] 
   --interval <duration>      Check battery at every interval. [default: 5m]
   --uevent <path>            Uevent path for reading battery stats.
                              [default: /sys/class/power_supply/BAT0/uevent]
   -h --help                  Show this screen.
   --version                  Show version.
+
 `
 )
 
@@ -69,10 +71,12 @@ func CommandLineParameters(arguments []string) Parameters {
 	}
 	file.Close()
 
+	message := args["--message"].(string)
+
 	return Parameters{
 		displays:  SetFrom(displays),
 		interval:  interval,
-		message:   "You battery is running low. Please plug in a power adapter",
+		message:   message,
 		threshold: threshold,
 		uevent:    uevent}
 }

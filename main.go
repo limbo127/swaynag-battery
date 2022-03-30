@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"time"
 )
@@ -23,7 +24,7 @@ func tick(watcher *Watcher, params Parameters) {
 	displays := DesiredDisplays(params.displays, ActiveDisplays())
 
 	if !battery.Charging() && battery.Capacity <= params.threshold {
-		messages := ShowAll(params.message, watcher.MessagesFor(displays))
+		messages := ShowAll(params.message+" ["+fmt.Sprintf("%v", battery.Capacity)+"/ 100 ]", watcher.MessagesFor(displays))
 		watcher.Update(messages, battery.Status)
 	}
 
