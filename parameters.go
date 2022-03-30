@@ -1,7 +1,10 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
+	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -35,12 +38,33 @@ Options:
   --message <string>         Message to display [default: You battery is running low. Please plug in a power adapter] 
   --interval <duration>      Check battery at every interval. [default: 5m]
   --uevent <path>            Uevent path for reading battery stats.
-                             [default: /sys/class/power_supply/BAT0/uevent]
+                             [default: auto]
   -h --help                  Show this screen.
   --version                  Show version.
 
 `
 )
+
+func isBattery(path string) bool {
+	t, err := ioutil.ReadFile(filepath.Join(path, "type"))
+	return err == nil && string(t) == "Battery\n"
+}
+
+func findBattery() string {
+	const sysfs = "/sys/class/power_supply"
+	files, err := ioutil.ReadDir(sysfs)
+	if err != nil {
+		return ""
+	}
+	for _, file := range files {
+		match, _ := regexp.MatchString("hid.*", file.Name())
+		path := filepath.Join(sysfs, file.Name())
+		if !match && isBattery(path) {
+			return path + "/uevent"
+		}
+	}
+	return ""
+}
 
 func CommandLineParameters(arguments []string) Parameters {
 	args, err := docopt.ParseArgs(usage, arguments, version)
@@ -65,6 +89,9 @@ func CommandLineParameters(arguments []string) Parameters {
 	}
 
 	uevent := args["--uevent"].(string)
+	if uevent == "auto" {
+		uevent = findBattery()
+	}
 	file, err := os.Open(uevent)
 	if err != nil {
 		logAndExit(42, "Could not load battery file '%s'.", uevent)
