@@ -1,20 +1,18 @@
 package main
 
 import (
+	"log"
 	"os"
 	"os/exec"
-	"strings"
-
-	ps "github.com/mitchellh/go-ps"
 )
 
 type Message struct {
-	PID     int
+	cmdMsg  *exec.Cmd
 	Display string
 }
 
 func show(text string, display string) (*Message, error) {
-	cmd := exec.Command("swaynag", "--message", text, "--output", display,"--layer","overlay")
+	cmd := exec.Command("swaynag", "--message", text, "--output", display, "--layer", "overlay")
 
 	err := cmd.Start()
 	if err != nil {
@@ -26,30 +24,22 @@ func show(text string, display string) (*Message, error) {
 		cmd.Wait()
 	}()
 
-	return &Message{PID: cmd.Process.Pid, Display: display}, nil
-}
-
-func isSwaynag(process ps.Process, err error) bool {
-	return err == nil &&
-		process != nil &&
-		strings.HasSuffix(process.Executable(), "swaynag")
+	return &Message{cmdMsg: cmd, Display: display}, nil
 }
 
 func ShowMessage(text string, message Message) (*Message, error) {
-	if isSwaynag(ps.FindProcess(message.PID)) {
-		return &message, nil
+	if message.cmdMsg != nil {
+		return nil, nil
 	}
-
 	return show(text, message.Display)
 }
 
 func CloseMessage(message Message) {
-	process, err := os.FindProcess(message.PID)
-	if err != nil {
-		return
+	log.Printf("close message process %v", message.cmdMsg)
+	if err := message.cmdMsg.Process.Signal(os.Kill); err != nil {
+		log.Printf("error during quit message %v", err)
 	}
-	defer process.Release()
-	process.Signal(os.Interrupt)
+
 }
 
 func ShowAll(text string, messages []Message) []Message {

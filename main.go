@@ -28,10 +28,10 @@ func tick(watcher *Watcher, params Parameters) {
 		watcher.Update(messages, battery.Status)
 	}
 
-	if battery.Charging() && battery.Status != watcher.Status() {
+	if battery.Charging() {
 		messages := watcher.Messages()
 		CloseAll(messages)
-		watcher.Update(messages, battery.Status)
+		watcher.Empty()
 		watcher.CleanUp(displays)
 	}
 }

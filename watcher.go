@@ -17,6 +17,12 @@ func (watcher *Watcher) Status() Status {
 	return watcher.status
 }
 
+func (watcher *Watcher) Empty() {
+	for k := range watcher.messages {
+		delete(watcher.messages, k)
+	}
+}
+
 func (watcher *Watcher) Messages() []Message {
 	var messages []Message
 	for _, message := range watcher.messages {
@@ -32,7 +38,7 @@ func (watcher *Watcher) MessagesFor(displays StringSet) []Message {
 		if contains {
 			messages = append(messages, message)
 		} else {
-			messages = append(messages, Message{PID: 0, Display: display})
+			messages = append(messages, Message{cmdMsg: nil, Display: display})
 		}
 	}
 	return messages
